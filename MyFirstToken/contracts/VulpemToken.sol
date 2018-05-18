@@ -8,12 +8,22 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// @dev implements SafeMath usage to prevent overflows in transactions
 contract VulpemToken is ERC20{
 
-    using SafeMath for uint256;
     mapping (address => uint256) balance; //any address balance is initialized by default to 0
+    mapping (address => mapping (address => uint256)) allowed;
+
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    string public version = "H0.1";
+
     uint256 public totalSupply;
 
     function vulpemToken() {
-      /// TODO init token infos
+        balances[msg.sender] = 1000;
+        totalSupply = 1000;
+        name = “Vulpem Internship Token”;
+        decimals = 6;
+        symbol = "VIT";
     }
 
     function transfer(address _to, uint _value) returns(bool success) {
@@ -27,18 +37,37 @@ contract VulpemToken is ERC20{
         }
     }
 
-    function balanceOf(address who) external view returns(uint256 balance) {
-        return balance[who]; //no risk of NPE default balance is 0
+    function balanceOf(address _who) public view returns(uint256 balance) {
+        return balance[_who]; // No risk of NPE default balance is 0
     }
-    /// TODO function to buy tokens paying eth
 
-    function totalSupply()
+    function totalSupply()public view returns (uint256 totalSupply) {
+        return totalSupply;
+    }
 
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
+    function approve(address _to, uint256 _value) public returns (bool) {
+        allowed[msg.spender][_to] = _value;
+        Approval(msg.sender,_to,_value);
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+       return allowed[_owner][_spender];
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        if(balance[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balance[_to] =+ _value;
+            balance[_from] =+ _value;
+            allowed[_from][msg.sender] =- _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
